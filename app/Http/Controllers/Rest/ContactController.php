@@ -2,8 +2,13 @@
 
 namespace App\Http\Controllers\Rest;
 
-use App\Http\Controllers\Controller;
+use App\Models\Contact;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use App\Http\Resources\ContactResource;
+use App\Http\Resources\SuccessResource;
+use App\Http\Resources\ContactCollection;
+use App\Http\Requests\ContactSavingRequest;
 
 class ContactController extends Controller
 {
@@ -14,7 +19,7 @@ class ContactController extends Controller
      */
     public function index()
     {
-        return [];
+        return new ContactCollection(Contact::orderBy('id', 'desc')->get());
     }
 
     /**
@@ -23,9 +28,14 @@ class ContactController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(ContactSavingRequest $request)
     {
-        //
+        $contact = Contact::create([
+            'phone' => $request->input('phone'),
+            'fullname' => $request->input('fullname')
+        ]);
+
+        return new ContactResource($contact);
     }
 
     /**
@@ -34,9 +44,9 @@ class ContactController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Contact $contact)
     {
-        //
+        return new ContactResource($contact);
     }
 
     /**
@@ -46,9 +56,11 @@ class ContactController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(ContactSavingRequest $request, Contact $contact)
     {
-        //
+        $contact->fill($request->validated())->save();
+
+        return new ContactResource($contact->fresh());
     }
 
     /**
@@ -57,8 +69,10 @@ class ContactController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Contact $contact)
     {
-        //
+        $contact->delete();
+
+        return new SuccessResource();
     }
 }
